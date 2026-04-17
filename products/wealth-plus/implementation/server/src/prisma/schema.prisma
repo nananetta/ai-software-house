@@ -1,0 +1,78 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/client"
+}
+
+model User {
+  id            String                 @id @default(uuid())
+  email         String                 @unique
+  password      String
+  name          String
+  settings      UserFinancialSettings?
+  snapshots     Snapshot[]
+  refreshTokens RefreshToken[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+}
+
+/// Server-side refresh token store for invalidation on logout / password change
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model UserFinancialSettings {
+  id                         String   @id @default(uuid())
+  userId                     String   @unique
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseCurrency               String   @default("THB")
+  currentAge                 Int?
+  retirementAge              Int?
+  retirementTargetAmount     Float?
+  expectedAnnualReturn       Float?
+  expectedAnnualContribution Float?
+  updatedAt                  DateTime @updatedAt
+}
+
+model Snapshot {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshotName String
+  snapshotDate DateTime
+  notes        String?
+  isLocked     Boolean        @default(false)
+  items        SnapshotItem[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([userId, snapshotDate])
+}
+
+model SnapshotItem {
+  id             String   @id @default(uuid())
+  snapshotId     String
+  snapshot       Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  investmentType String
+  institution    String
+  investmentName String
+  currentBalance Float
+  currency       String   @default("THB")
+  note           String?
+  displayOrder   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([snapshotId, displayOrder])
+}

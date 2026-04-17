@@ -1,0 +1,8 @@
+client/node_modules
+client/dist
+server/node_modules
+server/dist
+server/src/prisma/wealth-plus.db
+server/src/prisma/wealth-plus.db-journal
+npm-debug.log
+.DS_Store

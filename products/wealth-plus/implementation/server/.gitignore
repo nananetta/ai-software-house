@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables (never commit real secrets)
+.env
+.env.local
+.env.*.local
+
+# Prisma database files
+src/prisma/*.db
+src/prisma/*.db-shm
+src/prisma/*.db-wal
+prisma/*.db
+prisma/*.db-shm
+prisma/*.db-wal
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
