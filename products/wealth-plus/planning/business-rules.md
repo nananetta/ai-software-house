@@ -131,6 +131,7 @@ The following investment types are available as preset options in the UI. Custom
 | MUTUAL_FUND | กองทุนรวม | Mutual Funds |
 | GOLD | ทองคำ | Gold |
 | REAL_ESTATE | อสังหาริมทรัพย์ | Real Estate |
+| ALTERNATIVE | สินทรัพย์ทางเลือก | Alternative Assets |
 | CASH_ON_HAND | เงินสด | Cash on Hand |
 | OTHER | อื่นๆ | Other |
 
@@ -288,6 +289,37 @@ If a user has not configured their retirement settings, the system MAY pre-popul
 - Target amount: ฿30,000,000
 
 These defaults are UI hints; the settings record is only created/updated on explicit save.
+
+**BR-047 — Retirement trajectory series**
+The retirement progress response MUST include a yearly trajectory series from the current portfolio point through retirement age. Each point MUST include:
+- `yearOffset`
+- `age`
+- `date`
+- `value`
+
+This series is used for the retirement progress chart and MUST be generated from the same formula and assumptions as BR-041.
+Enforcement: API
+
+**BR-048 — Retirement target reach milestone**
+The retirement progress response MUST indicate whether the retirement target is reached before or at retirement age.
+
+If reached within the projection window, the response MUST provide:
+- `targetReachAge`
+- `targetReachDate`
+- `targetReachYearOffset`
+- `targetReachValue`
+
+If the target is already met at the current portfolio value, the reach milestone MUST resolve to the current date/current age. If the target is not reached by retirement age, these fields MUST be `null`.
+Enforcement: API
+
+**BR-049 — Retirement projection precision**
+Retirement projection math MUST remain annual in basis:
+- `expectedAnnualReturn` is applied as an annual rate
+- `expectedAnnualContribution` is treated as an annual contribution
+- the trajectory uses yearly points
+
+The system MAY interpolate the target reach milestone between yearly points for display, but MUST NOT imply monthly contribution or daily compounding assumptions that are not part of BR-041.
+Enforcement: API and UI
 Enforcement: UI
 
 ---

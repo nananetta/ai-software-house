@@ -11,6 +11,7 @@ export const INVESTMENT_TYPE_CODES = [
   'MUTUAL_FUND',
   'GOLD',
   'REAL_ESTATE',
+  'ALTERNATIVE',
   'CASH_ON_HAND',
   'OTHER',
 ] as const;
@@ -26,6 +27,7 @@ export const INVESTMENT_TYPE_LABELS: Record<InvestmentTypeCode, string> = {
   MUTUAL_FUND: 'กองทุนรวม',
   GOLD: 'ทองคำ',
   REAL_ESTATE: 'อสังหาริมทรัพย์',
+  ALTERNATIVE: 'สินทรัพย์ทางเลือก',
   CASH_ON_HAND: 'เงินสด',
   OTHER: 'อื่นๆ',
 };
@@ -239,6 +241,13 @@ export interface RetirementSettingsDto {
   expectedAnnualContribution: number;
 }
 
+export interface RetirementTrajectoryPointDto {
+  yearOffset: number;
+  age: number;
+  date: string;
+  value: number;
+}
+
 export interface RetirementDto {
   currentPortfolioTotal: number;
   settings: RetirementSettingsDto | null;
@@ -247,6 +256,12 @@ export interface RetirementDto {
   gap: number | null;
   progressPercent: number | null;
   isTargetReached: boolean;
+  trajectory: RetirementTrajectoryPointDto[];
+  targetReachAge: number | null;
+  targetReachDate: string | null;
+  targetReachYearOffset: number | null;
+  targetReachValue: number | null;
+  isTargetReachableByRetirement: boolean;
   surplusAmount?: number;
 }
 

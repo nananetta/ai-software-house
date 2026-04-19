@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import * as dashboardApi from '../api/dashboard';
+import type { RetirementSimulationRequest } from '../types/index';
 
 export const DASHBOARD_KEY = ['dashboard'] as const;
 export const ALLOCATION_KEY = ['dashboard', 'allocation'] as const;
@@ -23,5 +24,12 @@ export function useRetirement() {
   return useQuery({
     queryKey: RETIREMENT_KEY,
     queryFn: dashboardApi.getRetirement,
+  });
+}
+
+export function useSimulateRetirement() {
+  return useMutation({
+    mutationFn: (payload: RetirementSimulationRequest) =>
+      dashboardApi.simulateRetirement(payload),
   });
 }

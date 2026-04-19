@@ -317,7 +317,7 @@ All endpoints are prefixed with `/api`. Protected endpoints require `Authorizati
 |--------|------|------|--------------------|----------------|
 | GET | `/dashboard` | Yes | `?snapshotId=` (optional) | `{ snapshotId, snapshotName, totalCurrent, totalPrevious, changeAmount, changePercent, recentSnapshots }` |
 | GET | `/dashboard/allocation` | Yes | `?snapshotId=` (optional) | `{ allocation: [{ investmentType, total, percent }] }` |
-| GET | `/dashboard/retirement` | Yes | — | `{ projectedFV, gap, progressPercent, yearsRemaining, settings }` |
+| GET | `/dashboard/retirement` | Yes | — | `{ projectedFV, gap, progressPercent, yearsRemaining, settings, trajectory, targetReachAge, targetReachDate, targetReachYearOffset, targetReachValue, isTargetReachableByRetirement }` |
 
 ---
 

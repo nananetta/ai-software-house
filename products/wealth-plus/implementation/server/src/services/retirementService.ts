@@ -1,4 +1,8 @@
-import { RetirementDto, RetirementSettingsDto } from '../types';
+import {
+  RetirementDto,
+  RetirementSettingsDto,
+  RetirementTrajectoryPointDto,
+} from '../types';
 
 // =============================================================================
 // Retirement Projection Formula (BR-041)
@@ -33,6 +37,119 @@ export function calculateRetirementFV(
   return portfolioFV + contributionFV;
 }
 
+function addYears(baseDate: Date, years: number): Date {
+  const next = new Date(baseDate);
+  next.setUTCFullYear(next.getUTCFullYear() + years);
+  return next;
+}
+
+function addFractionalYears(baseDate: Date, years: number): Date {
+  const wholeYears = Math.floor(years);
+  const remainder = years - wholeYears;
+  const next = addYears(baseDate, wholeYears);
+  if (remainder <= 0) {
+    return next;
+  }
+
+  const daysInYear = 365.25;
+  next.setUTCDate(next.getUTCDate() + Math.round(remainder * daysInYear));
+  return next;
+}
+
+function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function roundAge(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function buildTrajectory(
+  currentPortfolioTotal: number,
+  currentAge: number,
+  yearsRemaining: number,
+  annualReturn: number,
+  annualContribution: number,
+  today: Date
+): RetirementTrajectoryPointDto[] {
+  const trajectory: RetirementTrajectoryPointDto[] = [];
+
+  for (let yearOffset = 0; yearOffset <= yearsRemaining; yearOffset += 1) {
+    trajectory.push({
+      yearOffset,
+      age: currentAge + yearOffset,
+      date: addYears(today, yearOffset).toISOString(),
+      value: roundCurrency(
+        calculateRetirementFV(
+          currentPortfolioTotal,
+          annualReturn,
+          yearOffset,
+          annualContribution
+        )
+      ),
+    });
+  }
+
+  return trajectory;
+}
+
+function buildTargetReach(
+  trajectory: RetirementTrajectoryPointDto[],
+  target: number,
+  currentAge: number,
+  today: Date
+) {
+  const currentPoint = trajectory[0];
+  if (!currentPoint) {
+    return {
+      targetReachAge: null,
+      targetReachDate: null,
+      targetReachYearOffset: null,
+      targetReachValue: null,
+      isTargetReachableByRetirement: false,
+    };
+  }
+
+  if (currentPoint.value >= target) {
+    return {
+      targetReachAge: roundAge(currentAge),
+      targetReachDate: today.toISOString(),
+      targetReachYearOffset: 0,
+      targetReachValue: currentPoint.value,
+      isTargetReachableByRetirement: true,
+    };
+  }
+
+  for (let index = 1; index < trajectory.length; index += 1) {
+    const previousPoint = trajectory[index - 1];
+    const currentPoint = trajectory[index];
+
+    if (!previousPoint || !currentPoint) continue;
+    if (currentPoint.value < target) continue;
+
+    const delta = currentPoint.value - previousPoint.value;
+    const fraction =
+      delta <= 0 ? 0 : Math.min(Math.max((target - previousPoint.value) / delta, 0), 1);
+    const yearOffset = previousPoint.yearOffset + fraction;
+
+    return {
+      targetReachAge: roundAge(currentAge + yearOffset),
+      targetReachDate: addFractionalYears(today, yearOffset).toISOString(),
+      targetReachYearOffset: roundAge(yearOffset),
+      targetReachValue: roundCurrency(target),
+      isTargetReachableByRetirement: true,
+    };
+  }
+
+  return {
+    targetReachAge: null,
+    targetReachDate: null,
+    targetReachYearOffset: null,
+    targetReachValue: null,
+    isTargetReachableByRetirement: false,
+  };
+}
+
 // =============================================================================
 // Build full retirement projection response
 // =============================================================================
@@ -47,6 +164,8 @@ export function buildRetirementProjection(
     expectedAnnualContribution: number | null;
   } | null
 ): RetirementDto {
+  const today = new Date();
+
   // If settings are not configured or incomplete, return a stub response
   if (
     !rawSettings ||
@@ -63,6 +182,12 @@ export function buildRetirementProjection(
       gap: null,
       progressPercent: null,
       isTargetReached: false,
+      trajectory: [],
+      targetReachAge: null,
+      targetReachDate: null,
+      targetReachYearOffset: null,
+      targetReachValue: null,
+      isTargetReachableByRetirement: false,
     };
   }
 
@@ -103,12 +228,27 @@ export function buildRetirementProjection(
       gap,
       progressPercent,
       isTargetReached,
+      trajectory: [
+        {
+          yearOffset: 0,
+          age: currentAge,
+          date: today.toISOString(),
+          value: roundCurrency(currentPortfolioTotal),
+        },
+      ],
+      targetReachAge: isTargetReached ? roundAge(currentAge) : null,
+      targetReachDate: isTargetReached ? today.toISOString() : null,
+      targetReachYearOffset: isTargetReached ? 0 : null,
+      targetReachValue: isTargetReached ? roundCurrency(target) : null,
+      isTargetReachableByRetirement: isTargetReached,
       ...(isTargetReached ? { surplusAmount: Math.abs(gap) } : {}),
     };
   }
 
   const rawFV = calculateRetirementFV(currentPortfolioTotal, r, n, c);
-  const projectedFV = Math.round(rawFV * 100) / 100;
+  const projectedFV = roundCurrency(rawFV);
+  const trajectory = buildTrajectory(currentPortfolioTotal, currentAge, n, r, c, today);
+  const targetReach = buildTargetReach(trajectory, target, currentAge, today);
 
   return {
     currentPortfolioTotal,
@@ -118,6 +258,8 @@ export function buildRetirementProjection(
     gap,
     progressPercent,
     isTargetReached,
+    trajectory,
+    ...targetReach,
     ...(isTargetReached ? { surplusAmount: Math.abs(gap) } : {}),
   };
 }

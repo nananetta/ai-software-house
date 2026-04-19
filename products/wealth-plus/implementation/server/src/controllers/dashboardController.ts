@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import * as dashboardService from '../services/dashboardService';
+import { SimulateRetirementInput } from '../schemas/dashboardSchema';
 
 // =============================================================================
 // asyncHandler helper
@@ -47,3 +48,18 @@ export const getRetirement = asyncHandler(async (req: Request, res: Response): P
   const retirement = await dashboardService.getDashboardRetirement(userId);
   res.status(200).json(retirement);
 });
+
+// =============================================================================
+// POST /api/dashboard/retirement/simulate
+// =============================================================================
+
+export const simulateRetirement = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user.id;
+    const retirement = await dashboardService.simulateDashboardRetirement(
+      userId,
+      req.body as SimulateRetirementInput
+    );
+    res.status(200).json(retirement);
+  }
+);

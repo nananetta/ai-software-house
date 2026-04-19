@@ -1028,7 +1028,7 @@ Notes:
 
 ### GET /api/dashboard/retirement
 
-Return the retirement goal progress for the authenticated user. Uses the latest snapshot total as the current portfolio value and the stored `UserFinancialSettings` for projection parameters (BR-041 to BR-044).
+Return the retirement goal progress for the authenticated user. Uses the latest snapshot total as the current portfolio value and the stored `UserFinancialSettings` for projection parameters (BR-041 to BR-047).
 
 **Auth required:** Yes
 
@@ -1052,7 +1052,32 @@ None. Always uses the latest snapshot for PV and the stored settings.
   "projectedFV": 68142684.23,
   "gap": 15000000.00,
   "progressPercent": 50.0,
-  "isTargetReached": false
+  "isTargetReached": false,
+  "trajectory": [
+    {
+      "yearOffset": 0,
+      "age": 40,
+      "date": "2026-04-19T00:00:00.000Z",
+      "value": 15000000.00
+    },
+    {
+      "yearOffset": 1,
+      "age": 41,
+      "date": "2027-04-19T00:00:00.000Z",
+      "value": 16550000.00
+    },
+    {
+      "yearOffset": 20,
+      "age": 60,
+      "date": "2046-04-19T00:00:00.000Z",
+      "value": 68142684.23
+    }
+  ],
+  "targetReachAge": 47.6,
+  "targetReachDate": "2033-11-26T00:00:00.000Z",
+  "targetReachYearOffset": 7.6,
+  "targetReachValue": 30000000.00,
+  "isTargetReachableByRetirement": true
 }
 ```
 
@@ -1067,6 +1092,14 @@ When `gap ≤ 0` (target already exceeded):
   "gap": -5000000.00,
   "progressPercent": 116.7,
   "isTargetReached": true,
+  "trajectory": [
+    { "...": "..." }
+  ],
+  "targetReachAge": 40.0,
+  "targetReachDate": "2026-04-19T00:00:00.000Z",
+  "targetReachYearOffset": 0,
+  "targetReachValue": 30000000.00,
+  "isTargetReachableByRetirement": true,
   "surplusAmount": 5000000.00
 }
 ```
@@ -1081,7 +1114,13 @@ When `gap ≤ 0` (target already exceeded):
   "projectedFV": null,
   "gap": null,
   "progressPercent": null,
-  "isTargetReached": false
+  "isTargetReached": false,
+  "trajectory": [],
+  "targetReachAge": null,
+  "targetReachDate": null,
+  "targetReachYearOffset": null,
+  "targetReachValue": null,
+  "isTargetReachableByRetirement": false
 }
 ```
 
@@ -1089,7 +1128,10 @@ Notes:
 - `projectedFV` uses the formula: `FV = PV × (1 + r)^n + C × [((1+r)^n − 1) / r]` (BR-041).
 - When `r = 0`: `FV = PV + (C × n)`.
 - `progressPercent` is rounded to 1 decimal place (BR-043).
-- When `yearsRemaining ≤ 0`, `projectedFV` is `null` and a descriptive message is communicated via the `isTargetReached` flag or a separate `retirementAgeReached: true` field (BR-044).
+- `trajectory` is a yearly series from the current date/age through retirement age. It is intended for chart rendering and always uses the same projection assumptions as `projectedFV`.
+- `targetReachAge` / `targetReachDate` / `targetReachYearOffset` describe when the retirement target is first reached within the retirement window. These fields are `null` when the target is not reached by retirement age.
+- When the target is already met at the current portfolio value, `targetReachAge` resolves to the current age and `targetReachYearOffset` is `0`.
+- When `yearsRemaining ≤ 0`, `projectedFV` is `null`, `trajectory` contains only the current point, and the UI is expected to suppress the forward projection chart (BR-044).
 
 #### Error Responses
 

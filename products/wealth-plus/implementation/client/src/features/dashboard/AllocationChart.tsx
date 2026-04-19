@@ -50,6 +50,53 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   );
 }
 
+interface AllocationPieLabelProps {
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  innerRadius?: number;
+  outerRadius?: number;
+  percent?: number;
+  name?: string;
+}
+
+function renderPieLabel({
+  cx = 0,
+  cy = 0,
+  midAngle = 0,
+  innerRadius = 0,
+  outerRadius = 0,
+  percent = 0,
+  name = '',
+}: AllocationPieLabelProps) {
+  const RADIAN = Math.PI / 180;
+  const isInside = percent >= 0.09;
+  const radius = isInside
+    ? innerRadius + (outerRadius - innerRadius) * 0.58
+    : outerRadius + 22;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const anchor = x > cx ? 'start' : 'end';
+  const label = `${name} ${Math.round(percent * 100)}%`;
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill={isInside ? '#ffffff' : '#475569'}
+      textAnchor={isInside ? 'middle' : anchor}
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight={600}
+      stroke={isInside ? 'rgba(15,23,42,0.18)' : 'none'}
+      strokeWidth={isInside ? 0.75 : 0}
+      paintOrder="stroke"
+    >
+      {label}
+    </text>
+  );
+}
+
 export function AllocationChart({ data }: AllocationChartProps) {
   const chartData = data.map((d) => ({
     ...d,
@@ -59,17 +106,19 @@ export function AllocationChart({ data }: AllocationChartProps) {
   }));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
-      <div className="h-[300px]">
+    <div className="space-y-4">
+      <div className="h-[360px] sm:h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              outerRadius={100}
+              innerRadius={66}
+              outerRadius={128}
               dataKey="value"
-              label={false}
+              label={renderPieLabel}
+              labelLine
             >
               {chartData.map((_, i) => (
                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -80,7 +129,7 @@ export function AllocationChart({ data }: AllocationChartProps) {
         </ResponsiveContainer>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         {chartData.map((item, index) => (
           <div
             key={item.investmentType}

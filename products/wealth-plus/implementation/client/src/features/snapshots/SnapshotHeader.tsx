@@ -2,11 +2,16 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Pencil, Lock, Unlock, X, Check, Download } from 'lucide-react';
+import { Pencil, Lock, Unlock, X, Check, Download, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
-import { useLockSnapshot, useUnlockSnapshot, useUpdateSnapshot } from '../../hooks/useSnapshots';
+import {
+  useDeleteSnapshot,
+  useLockSnapshot,
+  useUnlockSnapshot,
+  useUpdateSnapshot,
+} from '../../hooks/useSnapshots';
 import { useToast } from '../../components/ui/Toast';
 import { formatDate, toInputDate } from '../../utils/formatDate';
 import type { SnapshotWithItems } from '../../types/index';
@@ -28,11 +33,13 @@ type EditFormValues = z.infer<typeof editSchema>;
 export function SnapshotHeader({ snapshot, isLocked }: SnapshotHeaderProps) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [showUnlockConfirm, setShowUnlockConfirm] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const { toast } = useToast();
 
   const lockMutation = useLockSnapshot(snapshot.id);
   const unlockMutation = useUnlockSnapshot(snapshot.id);
   const updateMutation = useUpdateSnapshot(snapshot.id);
+  const deleteMutation = useDeleteSnapshot();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
@@ -103,6 +110,17 @@ export function SnapshotHeader({ snapshot, isLocked }: SnapshotHeaderProps) {
     } catch {
       toast.error('Failed to export snapshot.');
     }
+  };
+
+  const handleDelete = () => {
+    deleteMutation.mutate(snapshot.id, {
+      onSuccess: () => {
+        toast.success('Snapshot deleted.');
+      },
+      onError: () => {
+        toast.error('Failed to delete snapshot.');
+      },
+    });
   };
 
   return (
@@ -220,6 +238,39 @@ export function SnapshotHeader({ snapshot, isLocked }: SnapshotHeaderProps) {
               >
                 <Lock className="h-3.5 w-3.5" />
                 {lockMutation.isPending ? 'Locking…' : 'Lock'}
+              </Button>
+            )}
+
+            {showDeleteConfirm ? (
+              <div className="flex items-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2">
+                <span className="text-xs text-red-800">Delete this snapshot permanently?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? 'Deleting…' : 'Confirm'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={deleteMutation.isPending}
+                className="gap-1.5 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
               </Button>
             )}
           </div>

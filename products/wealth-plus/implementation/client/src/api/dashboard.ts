@@ -1,5 +1,10 @@
 import { apiClient } from './client';
-import type { DashboardSummary, DashboardAllocation, RetirementProjection } from '../types/index';
+import type {
+  DashboardSummary,
+  DashboardAllocation,
+  RetirementProjection,
+  RetirementSimulationRequest,
+} from '../types/index';
 
 export async function getDashboard(snapshotId?: string): Promise<DashboardSummary> {
   const params = snapshotId ? { snapshotId } : {};
@@ -15,5 +20,15 @@ export async function getAllocation(snapshotId?: string): Promise<DashboardAlloc
 
 export async function getRetirement(): Promise<RetirementProjection> {
   const { data } = await apiClient.get<RetirementProjection>('/dashboard/retirement');
+  return data;
+}
+
+export async function simulateRetirement(
+  payload: RetirementSimulationRequest
+): Promise<RetirementProjection> {
+  const { data } = await apiClient.post<RetirementProjection>(
+    '/dashboard/retirement/simulate',
+    payload
+  );
   return data;
 }

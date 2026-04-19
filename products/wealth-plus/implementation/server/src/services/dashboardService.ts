@@ -9,6 +9,7 @@ import {
   INVESTMENT_TYPE_CODES,
 } from '../types';
 import { buildRetirementProjection } from './retirementService';
+import { SimulateRetirementInput } from '../schemas/dashboardSchema';
 
 // =============================================================================
 // Helper — resolve the target snapshot (latest or specified)
@@ -38,6 +39,18 @@ async function resolveSnapshot(userId: string, snapshotId?: string) {
     orderBy: [{ snapshotDate: 'desc' }, { createdAt: 'desc' }],
     include: { items: true },
   });
+}
+
+async function getLatestPortfolioTotal(userId: string): Promise<number> {
+  const latestSnapshot = await prisma.snapshot.findFirst({
+    where: { userId },
+    orderBy: [{ snapshotDate: 'desc' }, { createdAt: 'desc' }],
+    include: { items: { select: { currentBalance: true } } },
+  });
+
+  return latestSnapshot
+    ? latestSnapshot.items.reduce((sum, item) => sum + item.currentBalance, 0)
+    : 0;
 }
 
 // =============================================================================
@@ -181,20 +194,26 @@ export async function getDashboardAllocation(
 // =============================================================================
 
 export async function getDashboardRetirement(userId: string) {
-  // Always uses the latest snapshot for the current portfolio value
-  const latestSnapshot = await prisma.snapshot.findFirst({
-    where: { userId },
-    orderBy: [{ snapshotDate: 'desc' }, { createdAt: 'desc' }],
-    include: { items: { select: { currentBalance: true } } },
-  });
-
-  const currentPortfolioTotal = latestSnapshot
-    ? latestSnapshot.items.reduce((sum, item) => sum + item.currentBalance, 0)
-    : 0;
+  const currentPortfolioTotal = await getLatestPortfolioTotal(userId);
 
   const settings = await prisma.userFinancialSettings.findUnique({
     where: { userId },
   });
 
   return buildRetirementProjection(currentPortfolioTotal, settings ?? null);
+}
+
+export async function simulateDashboardRetirement(
+  userId: string,
+  overrides: SimulateRetirementInput
+) {
+  const currentPortfolioTotal = await getLatestPortfolioTotal(userId);
+
+  return buildRetirementProjection(currentPortfolioTotal, {
+    currentAge: overrides.currentAge,
+    retirementAge: overrides.retirementAge,
+    retirementTargetAmount: overrides.retirementTargetAmount,
+    expectedAnnualReturn: overrides.expectedAnnualReturn,
+    expectedAnnualContribution: overrides.expectedAnnualContribution,
+  });
 }
