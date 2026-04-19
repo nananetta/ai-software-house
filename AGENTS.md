@@ -106,3 +106,52 @@ Treat the following as default product standards unless a product-specific decis
 - CORS configuration must support the actual frontend origin used by the delivered app, not only local dev defaults
 - full-stack products should have a single Docker deliverable and a simple startup script such as `run.sh`
 - cookie-based or refresh-token-based authentication should preserve the session across browser refresh when credentials are still valid
+
+## Sub-Agent Orchestration
+
+When work is split across multiple agents, treat this repository as a role-driven multi-agent system rather than a pool of generic helpers.
+
+### Role Assignment Rules
+
+- Assign each sub-agent exactly one primary role from `roles/`
+- Give the sub-agent the matching role file as its operating contract
+- Also give the sub-agent the relevant company-wide context from `company/` and `playbooks/`
+- Keep decision ownership aligned with `playbooks/decision-rules.md`
+- Keep communication and handoffs aligned with `playbooks/communication-rules.md` and `templates/handoff-template.md`
+
+### Default Orchestration Flow
+
+Use this role sequence unless the task clearly does not require every role:
+
+CEO → Product Manager / Business Analyst → Solution Architect → Tech Lead → Backend / Frontend Developers → QA / Test Engineer → DevOps / Platform Engineer
+
+### Sub-Agent Prompting Standard
+
+When creating a sub-agent, include:
+
+- the assigned role name
+- the path to the role file under `roles/`
+- the relevant product path under `products/<product-slug>/`
+- the required inputs and expected outputs for that role
+- boundaries the sub-agent must not cross
+- the next role or handoff target
+
+### Orchestrator Expectations
+
+The coordinating agent should:
+
+- read `company/` for org-chart and operating-model context
+- read `playbooks/` for workflow, communication, and decision rules
+- read `roles/` to map responsibilities to sub-agents
+- avoid giving multiple sub-agents overlapping ownership unless collaboration is intentional
+- require handoff-style outputs instead of unstructured progress updates
+- treat role files as binding operating instructions for each assigned sub-agent
+
+### Example Delegation Pattern
+
+- assign requirements clarification to `roles/product-manager.md` and `roles/business-analyst.md`
+- assign system shape to `roles/solution-architect.md`
+- assign work breakdown and coordination to `roles/tech-lead.md`
+- assign implementation to `roles/backend-developer.md` and `roles/frontend-developer.md`
+- assign validation to `roles/qa-test-engineer.md`
+- assign packaging and runtime delivery to `roles/devops-platform-engineer.md`
