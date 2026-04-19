@@ -146,6 +146,10 @@ The coordinating agent should:
 - avoid giving multiple sub-agents overlapping ownership unless collaboration is intentional
 - require handoff-style outputs instead of unstructured progress updates
 - treat role files as binding operating instructions for each assigned sub-agent
+- inspect the current product state before spawning sub-agents
+- continue orchestration until the relevant role coverage is complete, even if agent-thread limits require waiting, closing completed agents, and spawning remaining roles in stages
+- synthesize completed role handoffs into one prioritized summary instead of stopping at the first sub-agent result
+- default to producing an action plan with owners and next handoff targets after collecting the role outputs
 
 ### Example Delegation Pattern
 

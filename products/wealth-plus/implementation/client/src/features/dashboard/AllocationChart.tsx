@@ -3,7 +3,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { formatTHB } from '../../utils/formatCurrency';
@@ -60,27 +59,49 @@ export function AllocationChart({ data }: AllocationChartProps) {
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="45%"
-          outerRadius={100}
-          dataKey="value"
-          label={false}
-        >
-          {chartData.map((_, i) => (
-            <Cell key={i} fill={COLORS[i % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          formatter={(value) => (
-            <span className="text-xs text-gray-700">{value}</span>
-          )}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+      <div className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              dataKey="value"
+              label={false}
+            >
+              {chartData.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="space-y-2">
+        {chartData.map((item, index) => (
+          <div
+            key={item.investmentType}
+            className="flex items-start justify-between gap-3 rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
+          >
+            <div className="min-w-0 flex items-start gap-2">
+              <span
+                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
+                <p className="text-xs text-gray-500">{formatTHB(item.value)}</p>
+              </div>
+            </div>
+            <span className="shrink-0 text-sm font-semibold text-gray-900">
+              {item.percent.toFixed(1)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

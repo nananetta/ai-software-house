@@ -1,7 +1,0 @@
-interface:
-  display_name: "Software House Orchestrator"
-  short_description: "Coordinate role-driven product delivery work"
-  default_prompt: "Use $software-house-orchestrator to assign repository roles, coordinate handoffs, and drive this product task through the software-house workflow."
-
-policy:
-  allow_implicit_invocation: true
